@@ -1,0 +1,5 @@
+numpy
+thewalrus
+scipy
+matplotlib
+pybolano
