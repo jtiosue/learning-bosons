@@ -2,6 +2,8 @@ from .fockgaussian import matelem
 from thewalrus.decompositions import blochmessiah
 import numpy as np
 
+### TRY NUMBA: https://stackoverflow.com/questions/64609501/python-how-to-make-the-numba-based-for-loop-faster
+
 
 def sample_heterodyne(S, f, nsamples, initial_anneal=500, Delta=10):
     n = len(f)
@@ -34,7 +36,7 @@ def sample_heterodyne(S, f, nsamples, initial_anneal=500, Delta=10):
     for step in range(initial_anneal + Delta * nsamples):
         newalpha = (
             alpha
-            + np.random.normal(0, variance, size=n)
+            + np.random.normal(0, variance / 2, size=n)
             + 1j * np.random.normal(0, variance / 2, size=n)
         )
         new_pr = probability(newalpha)
