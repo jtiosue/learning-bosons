@@ -35,6 +35,44 @@ def heterodyne_samples_from_passive_Fock(f, W, nsamples):
     return result.samples
 
 
+def heterodyne_samples_from_passive_Fock(f, W, nsamples):
+    n = len(f)
+    eng = sf.Engine("fock", backend_options={"cutoff_dim": sum(f) + 1})
+    prog = sf.Program(n)
+
+    with prog.context as q:
+        for i, fi in enumerate(f):
+            ops.Fock(fi) | q[i]
+        ops.PassiveChannel(W) | q
+        for qm in q:
+            ops.MeasureHeterodyne() | qm
+
+    result = np.zeros((nsamples, n), dtype=np.complex128)
+    for i in range(nsamples):
+        result[i, :] = eng.run(prog).samples
+        eng.reset()
+
+    return result
+
+
+def heterodyne_samples_from_Gaussian(S, nsamples):
+    n = len(S) // 2
+    eng = sf.Engine("gaussian")
+    prog = sf.Program(n)
+
+    with prog.context as q:
+        ops.GaussianTransform(S) | q
+        for qm in q:
+            ops.MeasureHeterodyne() | qm
+
+    result = np.zeros((nsamples, n), dtype=np.complex128)
+    for i in range(nsamples):
+        result[i, :] = eng.run(prog).samples
+        eng.reset()
+
+    return result
+
+
 # def heterodyne_samples_from_Gaussian_Fock(f, S, nsamples, cutoff_dim_factor=2):
 #     """
 #     Sample heterodyne outcomes from \mathcal{U}_S |f1,...,fn>.

@@ -5,8 +5,8 @@ from algorithm1 import findV
 from algorithm2 import findVFock
 from algorithm3 import findQ
 from methods import (
-    # passive_overlap,
-    # Gaussian_overlap,
+    passive_overlap,
+    Gaussian_overlap,
     sigma_from_Lambda,
     random_unitary,
     fockstate_sigma,
@@ -17,6 +17,7 @@ from heterodyne import (
     heterodyne_samples_from_passive_Fock,
     heterodyne_samples_from_Gaussian_Fock,
     heterodyne_samples_from_vacuum,
+    heterodyne_samples_from_Gaussian,
 )
 import gpt.heterodyne
 import mysim.heterodyne
@@ -118,6 +119,7 @@ def test_passive(f, nsamples):
         f,
         nsamples,
     )
+    # samples = heterodyne_samples_from_passive_Fock(f, W, nsamples)
 
     Lambda1, Lambda2 = estimate_Lambda_from_samples(samples)
     sigma1, sigma2 = sigma_from_Lambda(Lambda1, Lambda2)
@@ -135,6 +137,8 @@ def test_passive(f, nsamples):
     np.testing.assert_allclose(
         Lambda2, SS @ Lambda2_init @ SS.T, atol=ATOL, verbose=False
     )
+    V, g = findVFock(sigma1, sigma2)
+    print(passive_overlap(g, V.conj().T @ W, f))
 
 
 @testing_wrapper
@@ -163,11 +167,29 @@ def test_Gaussian(f, nsamples):
     )
 
 
+@testing_wrapper
+def test_Gaussian_vacuum(n, nsamples):
+    S = random_symplectic(n, scale=0.1)
+    SS = np.kron(S, S)
+
+    samples = heterodyne_samples_from_Gaussian(S, nsamples)
+
+    Lambda1, Lambda2 = estimate_Lambda_from_samples(samples)
+    Lambda1_init, Lambda2_init = fockstate_Lambda((0,) * n)
+    np.testing.assert_allclose(
+        Lambda1, S @ Lambda1_init @ S.T, atol=ATOL, verbose=False
+    )
+    np.testing.assert_allclose(
+        Lambda2, SS @ Lambda2_init @ SS.T, atol=ATOL, verbose=False
+    )
+
+
 if __name__ == "__main__":
     n = 2
-    nsamples = 50000
+    nsamples = 100000
     # f = np.random.randint(0, 3, n)
     # test_vacuum(n, nsamples)
-    test_constfock_passive(n, 1, nsamples)
-    # test_passive(f, nsamples)
+    # test_constfock_passive(n, 1, nsamples)
+    test_passive((1, 2, 1), nsamples)
     # test_Gaussian(f, nsamples)
+    # test_Gaussian_vacuum(n, nsamples)

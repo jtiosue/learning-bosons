@@ -16,9 +16,6 @@ import strawberryfields.backends.gaussianbackend.gaussiancircuit as gc
 from math import factorial
 
 
-# pylint: disable=invalid-name
-
-
 def tmsq(state, i, j, r):
     """Given a gaussiancircuit object it applies a two mode squeezing operator
     by amount r between modes i and j using the decomposition of this operation
@@ -35,7 +32,6 @@ def tmsq(state, i, j, r):
     state.beamsplitter(-np.pi / 4, 0, i, j)
 
 
-# pylint: disable=too-many-arguments, too-many-locals
 def matelem(l, m, n, U, Up, ls, alpha):
     """Calculates a Fock matrix element <m|W(alpha,U,ls,Up)|n> of the Gaussian
     unitary W specified by alpha, U, ls, Up.
