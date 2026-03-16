@@ -1,9 +1,5 @@
 import numpy as np
-from thewalrus import perm
-from math import factorial
 from scipy.stats import unitary_group
-
-import strawberryfields as sf
 
 
 def random_unitary(n):
@@ -12,6 +8,10 @@ def random_unitary(n):
         if n > 1
         else np.array([[np.exp(1j * 2 * np.pi * np.random.random())]])
     )
+
+
+def create_symplectic_from_unitary(u):
+    return np.block([[u.real, -u.imag], [u.imag, u.real]])
 
 
 def q_from_r_unitary(n):
@@ -108,6 +108,129 @@ def fockstate_Lambda(f):
     return fockstate_Lambda_from_sigma(*fockstate_sigma(f))
 
 
+def estimate_Lambda_from_samples(samples):
+
+    # might need some factors of pi coming from the heterodyne povm
+    nsamples, n = samples.shape
+    sconj = samples.conj()
+    id = np.eye(n)
+
+    # We first estimate in the q basis. Then we apply the q_from_r_unitary
+    # to go to the r basis
+    L1 = np.zeros((2 * n, 2 * n), dtype=np.complex128)
+    L2 = np.zeros((2 * n,) * 4, dtype=np.complex128)
+    # So we have that L1[i, j] = <qi qj>, where q = (a, adag)
+    # need to anti normal order (see README). So when i,j<n, i,j>n, or i<n j>n, we're good.
+    L1[:n, :n] = samples.T @ samples
+    L1[n:, n:] = L1[:n, :n].conj().T  # == np.einsum("ij,ik", sconj, sconj) ?
+    L1[:n, n:] = samples.T @ sconj
+    L1 /= nsamples
+    # when i > n, j<n, we have <a0dag a1> = <-delta + a1 a0dag>
+    L1[n:, :n] = -id + L1[:n, n:].T
+
+    # Now L2. there's 16 cases
+    # could use Eq 4 of quant-ph/0505180, but since we only care about a few of them,
+    # the code will be must faster if we just hard code it.
+
+    # combine = lambda A: np.einsum("ij,kl", A, id)
+
+    # a a a a.
+    L2[:n, :n, :n, :n] = (
+        np.einsum("ij,ik,il,im", samples, samples, samples, samples) / nsamples
+    )
+
+    # adag adag adag adag.
+    # L2[n:, n:, n:, n:] = np.einsum("ij,ik,il,im", sconj, sconj, sconj, sconj) / nsamples
+    L2[:n, :n, :n, :n].conj()
+
+    # a a adag adag
+    L2[:n, :n, n:, n:] = (
+        np.einsum("ij,ik,il,im", samples, samples, sconj, sconj) / nsamples
+    )
+
+    # a a a adag
+    L2[:n, :n, :n, n:] = (
+        np.einsum("ij,ik,il,im", samples, samples, samples, sconj) / nsamples
+    )
+
+    # <a adag adag adag>
+    L2[:n, n:, n:, n:] = (
+        np.einsum("ij,ik,il,im", samples, sconj, sconj, sconj) / nsamples
+    )
+
+    # adag a a a = -d01 a2a3 +a1 a0dag a2 a3
+    ## = -d01 a2a3 - d02 a1 a3 + a1 a2 a0dag a3
+    ## = -d01 a2a3 - d02 a1 a3 - d03 a1 a2 + a1 a2 a3 a0dag
+    L2[n:, :n, :n, :n] = (
+        -(L1[:n, :n, None, None] * id[None, None, :, :]).transpose((2, 3, 0, 1))
+        - (L1[:n, :n, None, None] * id[None, None, :, :]).transpose((1, 3, 0, 2))
+        - (L1[:n, :n, None, None] * id[None, None, :, :]).transpose((1, 2, 0, 3))
+        + L2[:n, :n, :n, n:].transpose((1, 2, 3, 0))
+    )
+
+    # adag adag adag a = (adag3 a2 a1 a0).conj()
+    L2[n:, n:, n:, :n] = L2[n:, :n, :n, :n].conj().transpose((3, 2, 1, 0))
+
+    # a a a adag  = aa delta23 + aa adag3 a2
+    ## = aa delta23 + a0 a2 d13 + a0 adag3 a1 a2
+    ## = a0 a1 delta23 + a0 a2 d13 + a1 a2 d03 + adag3 a0 a1 a2
+    L2[:n, :n, :n, n:] = (
+        L1[:n, :n, None, None] * id[None, None, :, :]
+        + (L1[:n, :n, None, None] * id[None, None, :, :]).transpose((0, 2, 1, 3))
+        + (L1[:n, :n, None, None] * id[None, None, :, :]).transpose((1, 2, 0, 3))
+        + L2[n:, :n, :n, :n].transpose((3, 0, 1, 2))
+    )
+
+    ## adag0 adag1 a2 a3 = - a2 adag1 d30 - a2 adag0 d13 - adag1 a3 d02 - adag0 a3 d21 + a2 a3 adag0 adag1
+    L2[n:, n:, :n, :n] = (
+        -(L1[:n, n:, None, None] * id[None, None, :, :]).transpose((2, 1, 3, 0))
+        - (L1[:n, n:, None, None] * id[None, None, :, :]).transpose((2, 0, 1, 3))
+        - (L1[n:, :n, None, None] * id[None, None, :, :]).transpose((1, 3, 0, 2))
+        - (L1[n:, :n, None, None] * id[None, None, :, :]).transpose((0, 3, 2, 1))
+        + L2[:n, :n, n:, n:].transpose((2, 3, 0, 1))
+    )
+
+    # a adag a adag = a0 (-d12 + a2 adag1) adag3
+    ## = -a0 adag3 d12 + a0 a2 adag1 adag3
+    L2[:n, n:, :n, n:] = -(L1[:n, n:, None, None] * id[None, None, :, :]).transpose(
+        (0, 3, 1, 2)
+    ) + L2[:n, :n, n:, n:].transpose((0, 2, 1, 3))
+
+    # a adag adag a = a0 adag1 (-d23 + a3 adag2)
+    L2[:n, n:, n:, :n] = -(L1[:n, n:, None, None] * id[None, None, :, :]) + L2[
+        :n, n:, :n, n:
+    ].transpose((0, 1, 3, 2))
+
+    # <adag a a adag> = <a3 adag2 adag1 a0>.conj()
+    L2[n:, :n, :n, n:] = L2[:n, n:, n:, :n].conj().transpose((3, 2, 1, 0))
+
+    # adag a adag a = adag0 (d12 + adag2 a1) a3
+    L2[n:, :n, n:, :n] = (L1[n:, :n, None, None] * id[None, None, :, :]).transpose(
+        (0, 3, 1, 2)
+    ) + L2[n:, n:, :n, :n].transpose((0, 2, 1, 3))
+
+    # adag a adag adag = (-d01 + a1 adag0) adag2 adag3
+    L2[n:, :n, n:, n:] = -(L1[n:, n:, None, None] * id[None, None, :, :]).transpose(
+        (2, 3, 0, 1)
+    ) + L2[:n, n:, n:, n:].transpose((1, 0, 2, 3))
+
+    # <a a adag a> = <adag3 a2 adag1 adag0>.conj()
+    L2[:n, :n, n:, :n] = L2[n:, :n, n:, n:].conj().transpose((3, 2, 1, 0))
+
+    # adag adag a adag = adag adag delta23 + adag adag adag3 a2
+    L2[n:, n:, :n, n:] = L1[n:, n:, None, None] * id[None, None, :, :] + L2[
+        n:, n:, n:, :n
+    ].transpose((0, 1, 3, 2))
+
+    # <a adag a a> = <adag3 adag2 a1 adag0>.conj()
+    L2[:n, n:, :n, :n] = L2[n:, n:, :n, n:].conj().transpose((3, 2, 1, 0))
+
+    ## now let's rotate to the r basis
+    u = q_from_r_unitary(n).conj().T
+    uu = np.kron(u, u)
+    return u @ L1 @ u.T, uu @ L2.reshape((4 * n**2,) * 2) @ uu.T
+
+
 # def sigma_from_Lambda(Lambda1, Lambda2):
 #     """
 #     Create sigma^{(1)}, sigma^{(2)} from Lambda^{(1)}, Lambda^{(2)}
@@ -156,77 +279,68 @@ def fockstate_Lambda(f):
 #     return sigma1, sigma2
 
 
-def passive_overlap(fock1, W, fock2):
-    """
-    For a passive Gaussian unitary \mathcal{U}_W specified by the n by n
-    unitary matrix W, compute the overlap |<fock1| \mathcal{U}_W |fock2>|,
-    where fock1 and fock2 are length n integer vectors specifying Fock states.
-    """
-    if sum(fock1) != sum(fock2):
-        return 0.0
-    elif len(fock1) == 1:
-        return float(fock1[0] == fock2[0])
-    elif all(x == 0 for x in fock1) and all(y == 0 for y in fock2):
-        return 1.0
-    # N = sum(fock1)
-    rows = []
-    for i, f in enumerate(fock1):
-        for _ in range(f):
-            rows.append(W[i, :])
-    rows = np.array(rows)
-    M = []
-    for i, f in enumerate(fock2):
-        for _ in range(f):
-            M.append(rows[:, i])
-    M = np.array(M).T
-    return np.abs(perm(M)) / np.sqrt(
-        np.prod([factorial(f) for f in fock1]) * np.prod([factorial(f) for f in fock2])
-    )
+# from thewalrus import perm
+# from math import factorial
+# def passive_overlap(fock1, W, fock2):
+#     """
+#     For a passive Gaussian unitary \mathcal{U}_W specified by the n by n
+#     unitary matrix W, compute the overlap |<fock1| \mathcal{U}_W |fock2>|,
+#     where fock1 and fock2 are length n integer vectors specifying Fock states.
+#     """
+#     if sum(fock1) != sum(fock2):
+#         return 0.0
+#     elif len(fock1) == 1:
+#         return float(fock1[0] == fock2[0])
+#     elif all(x == 0 for x in fock1) and all(y == 0 for y in fock2):
+#         return 1.0
+#     # N = sum(fock1)
+#     rows = []
+#     for i, f in enumerate(fock1):
+#         for _ in range(f):
+#             rows.append(W[i, :])
+#     rows = np.array(rows)
+#     M = []
+#     for i, f in enumerate(fock2):
+#         for _ in range(f):
+#             M.append(rows[:, i])
+#     M = np.array(M).T
+#     return np.abs(perm(M)) / np.sqrt(
+#         np.prod([factorial(f) for f in fock1]) * np.prod([factorial(f) for f in fock2])
+#     )
 
 
-def Gaussian_overlap(f, S, g, cutoff_dim_factor=2):
-    """
-    Computes |<f| \mathcal{U}_S |g>| for Fock states f and g and for a
-    symplectic matrix S.
+# def Gaussian_overlap(f, S, g, cutoff_dim_factor=2):
+#     """
+#     Computes |<f| \mathcal{U}_S |g>| for Fock states f and g and for a
+#     symplectic matrix S.
 
-    cutoff_dim_factor refers to how high in Fock space we truncate.
-    We truncate at sum(f) * cutoff_dim_factor. If S is passive, then
-    cutoff_dim_factor >= 1 will result in no errors.
-    If S is not passive, then no matter what we set cutoff_dim_factor to be,
-    there will be some errors. The larger the squeezing in S, the larger
-    cutoff_dim_factor needs to be set in order to achieve good accuracy.
-    """
-    f = tuple(abs(round(x)) for x in f)
-    g = tuple(abs(round(x)) for x in g)
+#     cutoff_dim_factor refers to how high in Fock space we truncate.
+#     We truncate at sum(f) * cutoff_dim_factor. If S is passive, then
+#     cutoff_dim_factor >= 1 will result in no errors.
+#     If S is not passive, then no matter what we set cutoff_dim_factor to be,
+#     there will be some errors. The larger the squeezing in S, the larger
+#     cutoff_dim_factor needs to be set in order to achieve good accuracy.
+#     """
+#     import strawberryfields as sf
+#     f = tuple(abs(round(x)) for x in f)
+#     g = tuple(abs(round(x)) for x in g)
 
-    n = len(f)
+#     n = len(f)
 
-    if np.allclose(S.T @ S, np.eye(2 * n)):
-        U = S[:n, :n] + 1j * S[n:, :n]
-        return passive_overlap(U, f, g)
+#     if np.allclose(S.T @ S, np.eye(2 * n)):
+#         U = S[:n, :n] + 1j * S[n:, :n]
+#         return passive_overlap(U, f, g)
 
-    eng = sf.Engine("fock", backend_options={"cutoff_dim": cutoff_dim_factor * sum(f)})
-    prog = sf.Program(n)
+#     eng = sf.Engine("fock", backend_options={"cutoff_dim": cutoff_dim_factor * sum(f)})
+#     prog = sf.Program(n)
 
-    with prog.context as q:
-        for i in range(n):
-            sf.ops.Fock(g[i]) | q[i]
-        sf.ops.GaussianTransform(S) | q
+#     with prog.context as q:
+#         for i in range(n):
+#             sf.ops.Fock(g[i]) | q[i]
+#         sf.ops.GaussianTransform(S) | q
 
-        result = eng.run(prog)
-        state = result.state
-        overlap = state.fock_prob(f)
+#         result = eng.run(prog)
+#         state = result.state
+#         overlap = state.fock_prob(f)
 
-        return np.sqrt(overlap)
-
-
-def symmetric_projector(n):
-    """Projector onto the symmetric subspace of C^n ⊗ C^n."""
-    S = np.zeros((n * n, n * n))
-    for i in range(n):
-        for j in range(n):
-            row = i * n + j
-            col = j * n + i
-            S[row, col] = 1
-    I = np.eye(n * n)
-    return 0.5 * (I + S)
+#         return np.sqrt(overlap)

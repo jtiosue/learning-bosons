@@ -1,7 +1,5 @@
 import numpy as np
 
-__all__ = ("findV",)
-
 
 def get_linearly_independent_subset(vectors):
     # return q in the qr decomp

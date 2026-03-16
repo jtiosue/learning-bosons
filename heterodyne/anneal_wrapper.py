@@ -44,7 +44,9 @@ def _build_default_library(lib_path: Path) -> None:
         ) from exc
 
 
-def load_library(lib_path: str | Path | None = None, *, build_if_missing: bool = True) -> ctypes.CDLL:
+def load_library(
+    lib_path: str | Path | None = None, *, build_if_missing: bool = True
+) -> ctypes.CDLL:
     path = Path(lib_path) if lib_path is not None else _DEFAULT_LIB
     if not path.is_absolute():
         path = (_ROOT / path).resolve()
@@ -68,6 +70,17 @@ def load_library(lib_path: str | Path | None = None, *, build_if_missing: bool =
         ctypes.POINTER(_ComplexDoublePtr),
     ]
     library.sample_heterodyne.restype = None
+
+    library.overlap.argtypes = [
+        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_int),
+        ctypes.POINTER(ctypes.c_int),
+        ctypes.POINTER(_ComplexDoublePtr),
+        ctypes.POINTER(_ComplexDoublePtr),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(_ComplexDoublePtr),
+    ]
+    library.matelem.restype = ctypes.c_double
     return library
 
 
@@ -85,7 +98,9 @@ def _as_float_vector(values: np.ndarray | list[float], n: int, name: str) -> np.
     return np.ascontiguousarray(array)
 
 
-def _as_complex_vector(values: np.ndarray | list[complex], n: int, name: str) -> np.ndarray:
+def _as_complex_vector(
+    values: np.ndarray | list[complex], n: int, name: str
+) -> np.ndarray:
     array = np.asarray(values, dtype=np.complex128)
     if array.shape != (n,):
         raise ValueError(f"{name} must have shape ({n},), got {array.shape}")
@@ -105,9 +120,49 @@ def _matrix_row_pointers(matrix: np.ndarray) -> ctypes.Array:
     base_addr = matrix.ctypes.data
 
     for row in range(matrix.shape[0]):
-        row_pointer_array[row] = ctypes.cast(base_addr + row * stride, _ComplexDoublePtr)
+        row_pointer_array[row] = ctypes.cast(
+            base_addr + row * stride, _ComplexDoublePtr
+        )
 
     return row_pointer_array
+
+
+def overlap(
+    l,
+    m,
+    n,
+    U,
+    Up,
+    ls,
+    alpha,
+    *,
+    library: ctypes.CDLL | None = None,
+    lib_path: str | Path | None = None,
+):
+
+    m_array = _as_int_vector(m, l, "m")
+    n_array = _as_int_vector(n, l, "n")
+    u_array = _as_complex_matrix(U, l, "U")
+    p_array = _as_complex_matrix(Up, l, "P")
+    ls_array = _as_float_vector(ls, l, "ls")
+    alpha_array = _as_complex_vector(alpha, l, "alpha")
+
+    lib = library if library is not None else load_library(lib_path)
+
+    res = np.empty(1, dtype=np.float64)
+    res_array = _as_float_vector(res, 1, "res")
+
+    lib.overlap(
+        l,
+        m_array.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        n_array.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        _matrix_row_pointers(u_array),
+        _matrix_row_pointers(p_array),
+        ls_array.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        alpha_array.ctypes.data_as(_ComplexDoublePtr),
+        res_array.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+    )
+    return res[0]
 
 
 def sample_heterodyne(

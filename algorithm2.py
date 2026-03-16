@@ -1,8 +1,5 @@
 import numpy as np
 from algorithm1 import findV
-from methods import random_unitary
-
-__all__ = ("findVFock",)
 
 
 def findVFock(sigma1, sigma2):

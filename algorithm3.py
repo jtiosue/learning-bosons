@@ -1,9 +1,7 @@
 import numpy as np
 from thewalrus.decompositions import williamson
-from methods import sigma_from_Lambda
+from methods import sigma_from_Lambda, create_symplectic_from_unitary
 from algorithm2 import findVFock
-
-__all__ = ("findQ",)
 
 
 def findQ(Lambda1, Lambda2):
@@ -35,13 +33,3 @@ def findQ(Lambda1, Lambda2):
     Op = create_symplectic_from_unitary(V)
 
     return R @ Op, g
-
-
-def create_symplectic_from_unitary(u):
-    n = len(u)
-    O = np.zeros((2 * n, 2 * n))
-    O[:n, :n] = u.real
-    O[n:, n:] = u.real
-    O[:n, n:] = -u.imag
-    O[n:, :n] = u.imag
-    return O
