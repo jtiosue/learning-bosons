@@ -35,9 +35,8 @@ PyYAML==6.0.3
 quantum-blackbird==0.5.0
 quantum-xir==0.2.2
 requests==2.32.5
-scipy==1.13.1
+scipy==1.15.3
 six==1.17.0
-# StrawberryFields==0.23.0
 sympy==1.14.0
 termcolor==3.3.0
 thewalrus==0.22.0

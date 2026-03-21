@@ -35,7 +35,12 @@ def sigma_from_Lambda(Lambda1, Lambda2):
     L2 = uu @ Lambda2 @ uu.T
     # this gives us the Lambdas in the q basis.
     # Now we need to take the relevant submatrix
-    return L1[:n, n:], L2.reshape((2 * n,) * 4)[:n, :n, n:, n:].reshape((n**2, n**2))
+    sigma1, sigma2 = L1[:n, n:], L2.reshape((2 * n,) * 4)[:n, :n, n:, n:].reshape(
+        (n**2, n**2)
+    )
+
+    # To do: figure out if this should be .conj or not
+    return sigma1, sigma2
 
 
 def fockstate_Lambda_from_sigma(sigma1, sigma2):
@@ -141,11 +146,13 @@ def estimate_Lambda_from_samples(samples):
 
     # adag adag adag adag.
     # L2[n:, n:, n:, n:] = np.einsum("ij,ik,il,im", sconj, sconj, sconj, sconj) / nsamples
-    L2[:n, :n, :n, :n].conj()
+    L2[n:, n:, n:, n:] = L2[:n, :n, :n, :n].conj()
 
     # a a adag adag
     L2[:n, :n, n:, n:] = (
-        np.einsum("ij,ik,il,im", samples, samples, sconj, sconj) / nsamples
+        np.einsum("ij,ik,il,im", samples, samples, sconj, sconj)
+        / nsamples
+        # np.einsum("mi,mj,mk,ml->ijkl", samples, samples, sconj, sconj) / nsamples
     )
 
     # a a a adag
@@ -228,7 +235,8 @@ def estimate_Lambda_from_samples(samples):
     ## now let's rotate to the r basis
     u = q_from_r_unitary(n).conj().T
     uu = np.kron(u, u)
-    return u @ L1 @ u.T, uu @ L2.reshape((4 * n**2,) * 2) @ uu.T
+    L1, L2 = u @ L1 @ u.T, uu @ L2.reshape((4 * n**2,) * 2) @ uu.T
+    return L1, L2
 
 
 # def sigma_from_Lambda(Lambda1, Lambda2):

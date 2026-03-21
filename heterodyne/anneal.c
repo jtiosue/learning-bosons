@@ -25,7 +25,7 @@ void copy_array(int n, complex double *dest, complex double *src)
     }
 }
 
-void sample_heterodyne(int n, int *f, complex double **U, complex double **P, double *ls, int nsamples, int initial_anneal, int Delta, complex double *initial_alpha, complex double **result)
+void sample_heterodyne(int n, int *f, complex double **U, complex double **P, double *ls, int nsamples, double stepsize, int initial_anneal, int Delta, complex double *initial_alpha, complex double **result)
 {
     int *vac = calloc((size_t)n, sizeof(int));
     complex double *buf = malloc((size_t)n * sizeof(complex double));
@@ -40,7 +40,6 @@ void sample_heterodyne(int n, int *f, complex double **U, complex double **P, do
     //     variance += exp(ls[i]) * (1 + 2 * f[i]);
     // }
     // variance /= (4*n);
-    double variance = 1. / n;
 
     complex double *alpha = malloc((size_t)n * sizeof(complex double));
     complex double *newalpha = malloc((size_t)n * sizeof(complex double));
@@ -52,7 +51,7 @@ void sample_heterodyne(int n, int *f, complex double **U, complex double **P, do
     {
         for (int i = 0; i < n; ++i)
         {
-            newalpha[i] = alpha[i] + (2 * rand_double(&rng) - 1) * variance / 2.0 + I * ((2 * rand_double(&rng) - 1) * variance / 2.0);
+            newalpha[i] = alpha[i] + ((2 * rand_double(&rng) - 1) + I * (2 * rand_double(&rng) - 1)) * stepsize;
         }
         new_pr = probability(newalpha);
 
