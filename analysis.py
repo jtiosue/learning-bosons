@@ -10,6 +10,7 @@ from methods import (
     random_unitary,
     estimate_Lambda_from_samples,
     fockstate_sigma,
+    fockstate_Lambda_from_sigma,
     create_symplectic_from_unitary,
 )
 from heterodyne import (
@@ -20,8 +21,10 @@ from heterodyne import (
 )
 
 
-def analyze_algorithm_1(b, ns, nsampless, iters=10, filename="sim"):
-    data = np.zeros((len(ns), len(nsampless), iters))
+def analyze_algorithm_1(
+    b, ns, nsampless, iters=10, bootstrap_iters=100, filename="sim"
+):
+    data = np.zeros((len(ns), len(nsampless), iters * bootstrap_iters))
     for i, n in enumerate(ns):
         print(f"Starting n={n}")
         for k in range(iters):
@@ -30,10 +33,32 @@ def analyze_algorithm_1(b, ns, nsampless, iters=10, filename="sim"):
             # if b == 0:
             #     samples = heterodyne_samples_from_vacuum(n, nsampless[-1])
             # else:
-            samples = heterodyne_samples_from_Gaussian_Fock([b] * n, S, nsampless[-1])
-            # np.random.shuffle(samples)
+            samples = heterodyne_samples_from_Gaussian_Fock(
+                [b] * n, S, nsampless[-1] * 2
+            )
+            # # np.random.shuffle(samples)
+            # L1, L2 = estimate_Lambda_from_samples(samples)
+            # print(L2[0, 1])
+            # print()
+            # print(
+            #     (
+            #         np.kron(S, S)
+            #         @ fockstate_Lambda_from_sigma(*fockstate_sigma([b] * n))[1]
+            #         @ np.kron(S, S).T
+            #     )[0, 1]
+            # )
+            # print()
+            # print("Now sigma")
 
             # _, sigma2 = sigma_from_Lambda(*estimate_Lambda_from_samples(samples))
+            # print(sigma2[0, 1])
+            # print()
+            # print(
+            #     (np.kron(W, W) @ fockstate_sigma([b] * n)[1] @ np.kron(W, W).conj().T)[
+            #         0, 1
+            #     ]
+            # )
+            # print()
             # print(
             #     np.max(
             #         np.abs(
@@ -44,6 +69,7 @@ def analyze_algorithm_1(b, ns, nsampless, iters=10, filename="sim"):
             #         )
             #     )
             # )
+            # assert 0
             # print(
             #     np.max(
             #         np.abs(
@@ -84,21 +110,24 @@ def analyze_algorithm_1(b, ns, nsampless, iters=10, filename="sim"):
             # assert 0
 
             for j, nsamples in enumerate(nsampless):
-                np.random.shuffle(samples)
-                _, sigma2 = sigma_from_Lambda(
-                    *estimate_Lambda_from_samples(samples[:nsamples])
-                )
+                for l in range(bootstrap_iters):
+                    np.random.shuffle(samples)
+                    _, sigma2 = sigma_from_Lambda(
+                        *estimate_Lambda_from_samples(samples[:nsamples])
+                    )
 
-                if "conj" in filename:
-                    V = findV(sigma2.conj(), b)
-                else:
-                    V = findV(sigma2, b)
+                    if "conj" in filename:
+                        V = findV(sigma2.conj(), b)
+                    else:
+                        V = findV(sigma2, b)
 
-                # both of these are the same, but the second is probably faster.
-                data[i, j, k] = passive_overlap([b] * n, W.conj().T @ V, [b] * n)
-                # data[i, j, k] = abs(permanent_repeated(W.conj().T @ V, [b] * n))
-                # for b = 1, we could do:
-                # if b == 1: data[i, j, k] = abs(perm(W.conj().T @ V))
+                    # both of these are the same, but the second is probably faster.
+                    data[i, j, k * bootstrap_iters + l] += passive_overlap(
+                        [b] * n, W.conj().T @ V, [b] * n
+                    )
+                    # data[i, j, k] = abs(permanent_repeated(W.conj().T @ V, [b] * n))
+                    # for b = 1, we could do:
+                    # if b == 1: data[i, j, k] = abs(perm(W.conj().T @ V))
 
     with open(f"data/{filename}.txt", "w") as f:
         print(str(data.tolist()), file=f)
@@ -160,22 +189,52 @@ def analyze_algorithm_1_noheterodyne(
 
 
 if __name__ == "__main__":
-    start, end = 1e2, 4e6
+    # from heterodyne.anneal_wrapper import overlap
+
+    # # W = random_unitary(2)
+    # x = np.pi / 4
+    # W = np.array([[np.cos(x), 1j * np.sin(x)], [1j * np.sin(x), np.cos(x)]])
+    # print(
+    #     overlap(
+    #         2,
+    #         [0, 2],
+    #         [2, 0],
+    #         W,
+    #         np.eye(2),
+    #         [0, 0],
+    #         a := np.array([0.5, -1j]),
+    #     ),
+    #     overlap(
+    #         2,
+    #         [0, 2],
+    #         [2, 0],
+    #         W,
+    #         np.eye(2),
+    #         [0, 0],
+    #         a.conj(),
+    #     ),
+    # )
+
+    # assert 0
+
+    start, end = 1e2, 1e4
     analyze_algorithm_1(
         # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
         1,
-        [2, 3],
+        [2, 3, 4],
         np.geomspace(start, end, 10).astype(int),
-        iters=20,
-        filename="sim",
+        iters=1,
+        bootstrap_iters=100,
+        filename="newusim",
     )
-    analyze_algorithm_1(
-        # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
-        1,
-        [2, 3],
-        np.geomspace(start, end, 10).astype(int),
-        iters=20,
-        filename="simconj",
-    )
+    # analyze_algorithm_1(
+    #     # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
+    #     1,
+    #     [2, 3],
+    #     np.geomspace(start, end, 10).astype(int),
+    #     iters=1,
+    #     bootstrap_iters=100,
+    #     filename="newusimconj",
+    # )
 
     # analyze_algorithm_1_noheterodyne(1, np.arange(1, 10), np.geomspace(0.001, 1, 5))

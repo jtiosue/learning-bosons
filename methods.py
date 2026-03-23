@@ -15,13 +15,8 @@ def create_symplectic_from_unitary(u):
 
 
 def q_from_r_unitary(n):
-    u = np.zeros((2 * n, 2 * n), dtype=np.complex128)
-    ra = np.arange(0, n)
-    u[ra, ra] = 1 / np.sqrt(2)
-    u[ra, n + ra] = 1 / np.sqrt(2)
-    u[n + ra, ra] = -1j / np.sqrt(2)
-    u[n + ra, n + ra] = 1j / np.sqrt(2)
-    return u.conj().T
+    i = np.eye(n)
+    return np.block([[i, 1.0j * i], [i, -1j * i]]) / np.sqrt(2)
 
 
 def sigma_from_Lambda(Lambda1, Lambda2):

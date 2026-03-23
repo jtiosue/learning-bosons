@@ -1416,6 +1416,7 @@ complex double matelem(
     return result;
 }
 
+#include <stdio.h>
 void overlap(int l, int *m, int *n, complex double **U,
              complex double **p,
              double *ls, complex double *alpha, double *res)

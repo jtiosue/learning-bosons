@@ -53,3 +53,9 @@ If you use this code in your research, please cite our paper:
 ```
 
 Additionally, you should cite [Quesada's paper](https://pubs.aip.org/aip/jcp/article-abstract/150/16/164113/198316/Franck-Condon-factors-by-counting-perfect?redirectedFrom=fulltext), since I use his implementation to compute the heterodyne probabilities.
+
+
+
+# Note
+
+For some reason, in anneal.c, doing -conj(alpha) instead of -alpha seems to give better results. Not sure what's going on.

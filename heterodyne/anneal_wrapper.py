@@ -79,9 +79,11 @@ def load_library(
         ctypes.POINTER(_ComplexDoublePtr),
         ctypes.POINTER(_ComplexDoublePtr),
         ctypes.POINTER(ctypes.c_double),
-        ctypes.POINTER(_ComplexDoublePtr),
+        _ComplexDoublePtr,
+        ctypes.POINTER(ctypes.c_double),
     ]
-    library.matelem.restype = ctypes.c_double
+    library.overlap.restype = None
+
     return library
 
 
