@@ -8,8 +8,8 @@ double prob(int n, int *f, int *vac, complex double **U, complex double **P, dou
 {
     for (int i = 0; i < n; ++i)
     {
-        // buf[i] = -alpha[i];
-        buf[i] = -conj(alpha[i]);
+        buf[i] = -alpha[i];
+        // buf[i] = -conj(alpha[i]);
     }
 
     // return pow(cabs(matelem(n, vac, f, U, P, ls, buf)), 2);

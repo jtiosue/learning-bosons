@@ -221,20 +221,20 @@ if __name__ == "__main__":
     analyze_algorithm_1(
         # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
         1,
-        [2, 3, 4],
+        [2, 3],
         np.geomspace(start, end, 10).astype(int),
         iters=1,
         bootstrap_iters=100,
         filename="newusim",
     )
-    # analyze_algorithm_1(
-    #     # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
-    #     1,
-    #     [2, 3],
-    #     np.geomspace(start, end, 10).astype(int),
-    #     iters=1,
-    #     bootstrap_iters=100,
-    #     filename="newusimconj",
-    # )
+    analyze_algorithm_1(
+        # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
+        1,
+        [2, 3],
+        np.geomspace(start, end, 10).astype(int),
+        iters=1,
+        bootstrap_iters=100,
+        filename="newusimconj",
+    )
 
     # analyze_algorithm_1_noheterodyne(1, np.arange(1, 10), np.geomspace(0.001, 1, 5))
