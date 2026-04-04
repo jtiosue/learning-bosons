@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from thewalrus.random import random_symplectic
 from thewalrus import permanent_repeated, perm
@@ -19,6 +20,7 @@ from heterodyne import (
     heterodyne_samples_from_Gaussian_Fock,
     heterodyne_samples_from_vacuum,
 )
+from sample import shadow_sample
 
 
 def analyze_algorithm_1(
@@ -27,7 +29,7 @@ def analyze_algorithm_1(
     data = np.zeros((len(ns), len(nsampless), iters * bootstrap_iters))
     for i, n in enumerate(ns):
         print(f"Starting n={n}")
-        for k in range(iters):
+        for k in tqdm(range(iters)):
             W = random_unitary(n)
             S = create_symplectic_from_unitary(W)
             # if b == 0:
@@ -158,7 +160,7 @@ def analyze_algorithm_1_noheterodyne(
     for i, n in enumerate(ns):
         print(f"Starting n={n}")
         _, sigma2_0 = fockstate_sigma([b] * n)
-        for k in range(iters):
+        for k in tqdm(range(iters)):
             W = random_unitary(n)
             WW = np.kron(W, W)
             sigma2 = WW @ sigma2_0 @ WW.conj().T
@@ -179,6 +181,55 @@ def analyze_algorithm_1_noheterodyne(
             marker="o",
         )
     plt.xlabel("errors")
+    plt.ylabel("overlap")
+    plt.title(f"U_W |b^n> with b = {b}")
+    plt.legend()
+    ax = plt.gca()
+    ax.set_xscale("log")
+    f.savefig(f"data/{filename}.pdf")
+    plt.close()
+
+
+def analyze_algorithm_1_shadow_sample(
+    b, ns, nsampless, iters=10, filename="shadow_sim"
+):
+    data = np.zeros((len(ns), len(nsampless), iters))
+    for i, n in enumerate(ns):
+        print(f"Starting n={n}")
+        f = [b] * n
+        for k in tqdm(range(iters)):
+            W = random_unitary(n)
+            S = create_symplectic_from_unitary(W)
+            L1, L2 = shadow_sample(f, S, nsampless[-1])
+
+            for j, nsamples in enumerate(nsampless):
+                L1_s, L2_s = np.mean(L1[:nsamples], axis=0), np.mean(
+                    L2[:nsamples], axis=0
+                )
+                _, sigma2 = sigma_from_Lambda(L1_s, L2_s)
+
+                if "conj" in filename:
+                    V = findV(sigma2.conj(), b)
+                else:
+                    V = findV(sigma2, b)
+
+                # both of these are the same, but the second is probably faster.
+                # data[i, j, k] += passive_overlap(f, W.conj().T @ V, f)
+                data[i, j, k] = abs(permanent_repeated(W.conj().T @ V, f))
+
+    with open(f"data/{filename}.txt", "w") as f:
+        print(str(data.tolist()), file=f)
+
+    f = plt.figure()
+    for i, n in enumerate(ns):
+        plt.errorbar(
+            nsampless,
+            np.mean(data[i], axis=1),
+            np.std(data[i], axis=1),
+            label=f"n = {n}",
+            marker="o",
+        )
+    plt.xlabel("nsamples")
     plt.ylabel("overlap")
     plt.title(f"U_W |b^n> with b = {b}")
     plt.legend()
@@ -217,24 +268,31 @@ if __name__ == "__main__":
 
     # assert 0
 
-    start, end = 1e2, 1e4
-    analyze_algorithm_1(
-        # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
-        1,
-        [2, 3],
-        np.geomspace(start, end, 10).astype(int),
-        iters=1,
-        bootstrap_iters=100,
-        filename="newusim",
-    )
-    analyze_algorithm_1(
-        # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
-        1,
-        [2, 3],
-        np.geomspace(start, end, 10).astype(int),
-        iters=1,
-        bootstrap_iters=100,
-        filename="newusimconj",
-    )
+    start, end = 1e1, 1e4
+    # analyze_algorithm_1(
+    #     # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
+    #     1,
+    #     [2, 3],
+    #     np.geomspace(start, end, 10).astype(int),
+    #     iters=1,
+    #     bootstrap_iters=100,
+    #     filename="newusim",
+    # )
+    # analyze_algorithm_1(
+    #     # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
+    #     1,
+    #     [2, 3],
+    #     np.geomspace(start, end, 10).astype(int),
+    #     iters=1,
+    #     bootstrap_iters=100,
+    #     filename="newusimconj",
+    # )
 
     # analyze_algorithm_1_noheterodyne(1, np.arange(1, 10), np.geomspace(0.001, 1, 5))
+    analyze_algorithm_1_shadow_sample(
+        1,
+        [2, 3],
+        np.geomspace(start, end, 10).astype(int),
+        iters=10,
+        filename="shadow_sim",
+    )
