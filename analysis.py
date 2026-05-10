@@ -20,7 +20,8 @@ from heterodyne import (
     heterodyne_samples_from_Gaussian_Fock,
     heterodyne_samples_from_vacuum,
 )
-from sample import shadow_sample
+from sample import shadow_sample, sample_heterodyne_passive_fock1
+from datetime import datetime
 
 
 def analyze_algorithm_1(
@@ -239,7 +240,152 @@ def analyze_algorithm_1_shadow_sample(
     plt.close()
 
 
+def analyze_algorithm_1_fock1(
+    ns, nsampless, iters=10, bootstrap_iters=100, filename="sim"
+):
+    data = np.zeros((len(ns), len(nsampless), iters * bootstrap_iters))
+    for i, n in enumerate(ns):
+        print(f"Starting n={n}")
+        for k in tqdm(range(iters)):
+            W = random_unitary(n)
+            samples = sample_heterodyne_passive_fock1(W, nsampless[-1] * 2)
+
+            for j, nsamples in enumerate(nsampless):
+                for l in range(bootstrap_iters):
+                    np.random.shuffle(samples)
+                    _, sigma2 = sigma_from_Lambda(
+                        *estimate_Lambda_from_samples(samples[:nsamples])
+                    )
+
+                    V = findV(sigma2, 1)
+
+                    data[i, j, k * bootstrap_iters + l] = abs(perm(W.conj().T @ V))
+
+    with open(f"data/{filename}.txt", "w") as f:
+        print(str(data.tolist()), file=f)
+
+    f = plt.figure()
+    for i, n in enumerate(ns):
+        plt.errorbar(
+            nsampless,
+            np.mean(data[i], axis=1),
+            np.std(data[i], axis=1),
+            label=f"n = {n}",
+            marker="o",
+        )
+    plt.xlabel("nsamples")
+    plt.ylabel("overlap")
+    plt.title(f"U_W |1^n>")
+    plt.legend()
+    ax = plt.gca()
+    ax.set_xscale("log")
+    f.savefig(f"data/{filename}.pdf")
+    plt.close()
+
+    threshold = 0.75
+    num_samples = []
+    f = plt.figure()
+    for i, n in enumerate(ns):
+        d = np.mean(data[i], axis=1)
+        j = np.argmax(d >= threshold)
+        num_samples.append(nsampless[j])
+    f = plt.figure()
+    plt.plot(ns, num_samples, "o-")
+    plt.xlabel("n")
+    plt.ylabel("nsamples")
+    plt.title(f"U_W |1^n>, num samples to reach overlap = {threshold}")
+    ax = plt.gca()
+    # ax.set_xscale("log")
+    ax.set_yscale("log")
+    f.savefig(f"data/{filename}_theshold.pdf")
+    plt.close()
+
+
+def analyze_algorithm_1_fock1_memorytight(
+    ns, nsampless, iters=10, filename="sim", mem_thresh=100_00
+):
+    data = np.zeros((len(ns), len(nsampless), iters))
+    for i, n in enumerate(ns):
+        print(f"Starting n={n}")
+        # for k in tqdm(range(iters)):
+        for k in range(iters):
+            print(f"Starting iter {k} at", datetime.now())
+            W = random_unitary(n)
+            for j, nsamples in enumerate(nsampless):
+                sigma2 = np.zeros((n, n, n, n), dtype=np.complex128)
+                for _ in range(nsamples // mem_thresh):
+                    samples = sample_heterodyne_passive_fock1(W, mem_thresh)
+                    sconj = samples.conj()
+                    sigma2 += np.einsum("ij,ik,il,im", samples, samples, sconj, sconj)
+
+                if nsamples % mem_thresh:
+                    samples = sample_heterodyne_passive_fock1(W, nsamples % mem_thresh)
+                    sconj = samples.conj()
+                    sigma2 += np.einsum("ij,ik,il,im", samples, samples, sconj, sconj)
+
+                sigma2 /= nsamples
+                sigma2.resize((n**2, n**2))
+
+                V = findV(sigma2, 1)
+
+                data[i, j, k] = abs(perm(W.conj().T @ V))
+
+        with open(f"data/{filename}.txt", "w") as f:
+            print(str(ns.tolist() if isinstance(ns, np.ndarray) else ns), file=f)
+            print(str(nsampless.tolist()), file=f)
+            print(str(data.tolist()), file=f, end="")
+
+    plot(filename)
+
+
+def plot(filename, threshold=0.75):
+
+    with open(f"data/{filename}.txt") as f:
+        ns = np.array(eval(f.readline()))
+        nsampless = np.array(eval(f.readline()))
+        data = np.array(eval(f.readline()))
+
+    f = plt.figure()
+    for i, n in enumerate(ns):
+        plt.errorbar(
+            nsampless,
+            np.mean(data[i], axis=1),
+            np.std(data[i], axis=1),
+            label=f"n = {n}",
+            marker="o",
+        )
+    plt.xlabel("nsamples")
+    plt.ylabel("overlap")
+    plt.title(f"U_W |1^n>")
+    plt.legend()
+    ax = plt.gca()
+    ax.set_xscale("log")
+    f.savefig(f"data/{filename}.pdf")
+    plt.close()
+
+    plotns, num_samples, eb = [], [], []
+    f = plt.figure()
+    for i, n in enumerate(ns):
+        d = np.argmax(data[i] >= threshold, axis=0)
+        d = d[d > 0]
+        if len(d):
+            plotns.append(n)
+            num_samples.append(np.mean(nsampless[d]))
+            eb.append(np.std(nsampless[d]))
+    f = plt.figure()
+    plt.errorbar(plotns, num_samples, eb, marker="o")
+    plt.xlabel("n")
+    plt.ylabel("nsamples")
+    plt.title(f"U_W |1^n>, num samples to reach overlap = {threshold}")
+    ax = plt.gca()
+    # ax.set_xscale("log")
+    ax.set_yscale("log")
+    f.savefig(f"data/{filename}_theshold.pdf")
+    plt.close()
+
+
 if __name__ == "__main__":
+
     # from heterodyne.anneal_wrapper import overlap
 
     # # W = random_unitary(2)
@@ -268,7 +414,7 @@ if __name__ == "__main__":
 
     # assert 0
 
-    start, end = 1e1, 1e4
+    # start, end = 1e1, 1e4
     # analyze_algorithm_1(
     #     # 1, np.arange(2, 4), np.geomspace(1000, 5000, 5).astype(int), iters=20
     #     1,
@@ -289,10 +435,33 @@ if __name__ == "__main__":
     # )
 
     # analyze_algorithm_1_noheterodyne(1, np.arange(1, 10), np.geomspace(0.001, 1, 5))
-    analyze_algorithm_1_shadow_sample(
-        1,
-        [2, 3],
-        np.geomspace(start, end, 10).astype(int),
-        iters=10,
-        filename="shadow_sim",
+    # analyze_algorithm_1_shadow_sample(
+    #     1,
+    #     [2, 3],
+    #     np.geomspace(start, end, 10).astype(int),
+    #     iters=10,
+    #     filename="shadow_sim",
+    # )
+
+    # analyze_algorithm_1_fock1_memorytight(
+    #     [2, 3],
+    #     np.geomspace(1e1, 1e5, 20).astype(int),
+    #     iters=500,
+    #     filename="test_fock1_sim",
+    #     mem_thresh=100_000,
+    # )
+    # analyze_algorithm_1_fock1_memorytight(
+    #     [2, 3, 4, 5, 6, 7, 8, 9, 10],
+    #     np.geomspace(1e1, 1e9, 20).astype(int),
+    #     iters=500,
+    #     filename="fock1_sim",
+    #     mem_thresh=100_000,
+    # )
+    analyze_algorithm_1_fock1_memorytight(
+        [2, 3, 4, 5],
+        np.geomspace(1e1, 1e6, 10).astype(int),
+        iters=50,
+        filename="fock1_sim",
+        mem_thresh=100_000,
     )
+    # plot(filename="test_fock1_sim", threshold=0.75)

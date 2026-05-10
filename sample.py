@@ -2,6 +2,20 @@ import numpy as np
 from methods import fockstate_Lambda
 
 
+def _sample_heterodyne_fock1(nmodes: int, nsamples: int):
+    rng = np.random.default_rng()
+    size = nmodes, nsamples
+    s = rng.gamma(shape=2.0, scale=1.0, size=size)
+    theta = rng.uniform(0, 2 * np.pi, size=size)
+    return np.sqrt(s) * np.exp(1.0j * theta)
+
+
+def sample_heterodyne_passive_fock1(U: np.ndarray, nsamples: int):
+    n = len(U)
+    samples = U @ _sample_heterodyne_fock1(n, nsamples)
+    return samples.T
+
+
 def shadow_sample(f, S, nsamples=1000):
     """
     Sample from a Gaussian distribution around the true matrix entries
