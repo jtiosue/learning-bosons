@@ -59,3 +59,6 @@ Additionally, you should cite [Quesada's paper](https://pubs.aip.org/aip/jcp/art
 # Note
 
 For some reason, in anneal.c, doing -conj(alpha) instead of -alpha seems to give better results. Not sure what's going on.
+
+
+TEST psuh
