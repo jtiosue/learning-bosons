@@ -6,19 +6,17 @@ Implementation of our bosonic learning algorithms from our paper [arXiv:2510.016
 
 ```bash
 git clone https://github.com/jtiosue/learning-bosons
-cd learning-bosons/heterodyne
-gcc -std=c11 -O3 -shared -fPIC anneal.c overlap.c random.c pcg_basic.c -lm -o libanneal.so
-cd ..
+cd learning-bosons/
 python -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Now you can run basic tests, `python basic_tests.py`, or the analysis, `python analysis.py`.
+Now you can run the analysis with `python analysis.py` (see under the `if __name___ ...` for different things to run).
 
 ## Description
 
-$r$ refers to the $(x,p)$ basis. $q$ refers to the $(a, a^\dag)$ basis. For $n$ modes, `methods.q_from_r_unitary(n)` is the unitary that takes you between these two bases. When sampling heterodyne, you naturally can compute the expectation value of anti-normal ordered operators. Then, you can build up the expectation values of all operators made out of $a$'s and $a^\dag$'s. Then finally you can use the aforementioned unitary to rotate back to the $(x, p)$ basis to compute $\Lambda^{(t)}_{i_1,\dots,i_t,j_1,\dots,j_t} = \langle r_{i_1}\dots r_{i_t}r_{j_1} \dots r_{i_t}\rangle$. This whole process of taking heterodyne samples and creating $\Lambda^{(1)}$ and $\Lambda^{(2)}$ is done in `methods.estimate_Lambda_from_samples`. To go from $\Lambda^{(t)}$ to $\sigma^{(t)}_{i_1,\dots,i_t,j_1,\dots,j_t} = \langle a_{i_1}\dots a_{i_t} a_{j_1}^\dag \dots a_{j_t}^\dag \rangle$, we use `methods.sigma_from_Lambda`, where we simply rotate back to the $q$ basis and then take a submatrix.
+$r$ refers to the $(x,p)$ basis. $q$ refers to the $(a, a^\dag)$ basis. For $n$ modes, `methods.q_from_r_unitary(n)` is the unitary that takes you between these two bases. When sampling heterodyne, you naturally can compute the expectation value of anti-normal ordered operators (see our paper). Then, you can build up the expectation values of all operators made out of $a$'s and $a^\dag$'s. Then finally you can use the aforementioned unitary to rotate back to the $(x, p)$ basis to compute $\Lambda^{(t)}_{i_1,\dots,i_t,j_1,\dots,j_t} = \langle r_{i_1}\dots r_{i_t}r_{j_1} \dots r_{i_t}\rangle$. This whole process of taking heterodyne samples and creating $\Lambda^{(1)}$ and $\Lambda^{(2)}$ is done in `methods.estimate_Lambda_from_samples`. To go from $\Lambda^{(t)}$ to $\sigma^{(t)}_{i_1,\dots,i_t,j_1,\dots,j_t} = \langle a_{i_1}\dots a_{i_t} a_{j_1}^\dag \dots a_{j_t}^\dag \rangle$, we use `methods.sigma_from_Lambda`, where we simply rotate back to the $q$ basis and then take a submatrix.
 
 Given $\Lambda^{(t)}$ and $\sigma^{(t)}$, the three `algorithm#.py` files implement our learning algorithms. Namely:
 - `algorithm1.py` implements Algorithm 1 from the paper, which is the function `findV`. Given the fourth moment matrix $\sigma^{(2)}$ of a state $\mathcal U_W \ket{b,\dots, b}$ for a unitary $W$, `findV(sigma2, b)` returns a matrix $V$ such that $V$ equals $W$ up to unimportant permutations and phases.
@@ -26,19 +24,17 @@ Given $\Lambda^{(t)}$ and $\sigma^{(t)}$, the three `algorithm#.py` files implem
 - `algorithm3.py` implements Algorithm 3 from the paper, which is the function `findQ`. Given the second and fourth moment matrices $\Lambda^{(1)}, \Lambda^{(2)}$ of a state $\mathcal U_S \ket{f_1,\dots,f_n}$ for a symplectic $S$, `findQ(Lambda1, Lambda2)` returns a matrix $Q$ and a vector $\bm g = (g_1,\dots, g_n)$ such that $Q$ is close to $S$, up to unimportant permutations and phases, and $\bm g$ is a permutation of $\bm f$. 
 
 
-Finally, what remains is to understand how we simulate heterodyne measurements from our states $\mathcal U_S \ket{\bm f}$. This is done in `heterodyne/`. Using the ability to compute heterodyne probability $p(\alpha) = |\bra{\alpha} \mathcal U_S \ket{\bm f}|^2$, we run a Metropolis-Hastings algorithm in order to simulate sampling from $p(\alpha)$. This is done in `heterodyne/anneal.c`. So, given an $\alpha$, how do we actually compute $p(\alpha)$? This is done in `heterodyne/overlap.c`, which I will describe below. Finally, `heterodyne/anneal_wrapper.py` then wraps the C functionality so that it is usable in Python.
+Finally, what remains is to understand how we simulate heterodyne measurements from our states $\mathcal U_S \ket{\bm f}$. This is done in `sample.py`. 
+I actually did not implement this generally. Instead, I only performed numerical simulations for algorithm 1 for learning the state $\mathcal U_W \ket{1\dots 1}$.
+Simulating heterodyne sampling from this state is done in `sample.sample_heterodyne_passive_fock1`. Simulating $\mathcal U_W \ket{\bm f}$ is a straightforward extension, but I didn't implement it.
+Simulating heterodyne sampling from $\mathcal U_S \ket{\bm f}$ is not clear to me how to do it efficiently (I think it cannot be done efficiently actually).
 
-
-### Computing the overlap
-
-To compute the heterodyne probability distribution, we use the overlap calculation written [here](https://github.com/XanaduAI/fockgaussian) and published [here](https://arxiv.org/pdf/1811.09597) by N. Quesada. However, the overall simulated annealing algorithm was quite slow so I wanted to implement it in C. I wrote the `anneal.c` file, and *GPT 5.4 wrote the `overlap.c` file*, as well as the `anneal_wrapper.py` file. Everything not in the `heterodyne/` folder was written entirely by me.
-
-In order to get GPT 5.4 to code a C implementation of the overlap calculation, I gave it [this file by Quesada](https://github.com/XanaduAI/fockgaussian/blob/master/fockgaussian.py) and simply asked it to be coded in C. Once it was complete, I tested the C and Quesada's implementation against each other to ensure that they gave the same result, and they do.
-
+In the `analysis.py` file, you can see how to run/test algorithms 1, 2, and 3. However, because only `sample.sample_heterodyne_passive_fock1` is implemented and not `sample.sample_heterodyne_passive_fock` or `sample.sample_heterodyne_Gaussian_fock`, currently you cannot test algorithm 2 or 3 (even though algorithm 2 and 3 are themselves implemented in `algorithm2.py` and `algorithm3.py`).
+`sample.sample_heterodyne_passive_fock` would be very easy to implement to allow for testing of algorithm 2, but I did not do it.
 
 # Citation
 
-If you use this code in your research, please cite our paper:
+If you use this code in your research, or any of the ideas from our paper, please cite our paper:
 
 ```bibtex
 @misc{iosue2025higher-moment-t,
@@ -51,14 +47,3 @@ If you use this code in your research, please cite our paper:
 	title = {Higher moment theory and learnability of bosonic states},
 	year = {2025}}
 ```
-
-Additionally, you should cite [Quesada's paper](https://pubs.aip.org/aip/jcp/article-abstract/150/16/164113/198316/Franck-Condon-factors-by-counting-perfect?redirectedFrom=fulltext), since I use his implementation to compute the heterodyne probabilities.
-
-
-
-# Note
-
-For some reason, in anneal.c, doing -conj(alpha) instead of -alpha seems to give better results. Not sure what's going on.
-
-
-TEST psuh
