@@ -40,6 +40,18 @@ Simulating heterodyne sampling from $\mathcal U_S \ket{\boldsymbol f}$ is not cl
 In the `analysis.py` file, you can see how to run/test algorithms 1, 2, and 3. However, because only `sample.sample_heterodyne_passive_fock1` is implemented and not `sample.sample_heterodyne_passive_fock` or `sample.sample_heterodyne_Gaussian_fock`, currently you cannot test algorithm 2 or 3 (even though algorithm 2 and 3 are themselves implemented in `algorithm2.py` and `algorithm3.py`).
 `sample.sample_heterodyne_passive_fock` would be very easy to implement to allow for testing of algorithm 2, but I did not do it.
 
+## Important note
+
+The implementation of Algorithm 3 is from my description of the algorithm in the V1 version of the arXiv paper. 
+In the V2 version, I improved Algorithm 3 (in short, in V1, Algorithm 3 called Algorithm 2 which called Algorithm 1; in V2, Algorithm 3 directly calls Algorithm 1).
+It would be very easy to write the new version of Algorithm 3 in `algorithm3.py`, and hopefully I will do that soon.
+But for now, I have not done it yet.
+
+Additionally, in the paper, I analyze the sample complexity using a median of means estimator with heterodyne measurements.
+However, in the code, for simplicity, I simply use the empirical mean (see `methods.estimate_Lambda_from_samples` and/or the `analysis.py` file).
+
+
+
 # Citation
 
 If you use this code in your research, or any of the ideas from our paper, please cite our paper:
