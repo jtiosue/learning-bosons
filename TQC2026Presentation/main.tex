@@ -1,0 +1,35 @@
+\documentclass
+  % [handout] % to ignore pauses
+  % [notes] % show notes written in frames with \note{...}
+  % [notes=only]
+  {iosuepresentation}
+
+
+\usepackage[%
+  backend=bibtex,
+  style=authoryear, % pick whatever style you want
+  sorting=none,
+  doi=false,
+  isbn=false,
+  eprint=true,
+  url=false,
+  maxbibnames=2,
+  maxcitenames=2,
+  minbibnames=2,
+  mincitenames=2
+]{biblatex}
+% \AtBeginBibliography{\small}
+\addbibresource{references.bib}
+
+\input{meta}
+
+\begin{document}
+\nocite{iosue2025higher-moment-t}
+\input{body/body.tex}
+\appendix
+\input{body/additional.tex}
+
+\begin{frame}[noframenumbering,allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+\end{document}

@@ -1,0 +1,333 @@
+\usepackage{amsmath,amssymb,amsthm,amsfonts,bm,graphicx,mathtools,ifthen,xcolor}
+\allowdisplaybreaks
+
+\graphicspath{ {./graphics/} }
+
+% to allow for defining commands with *
+% e.g. see \note and \note* below
+\usepackage{suffix}
+
+% meta
+\newcommand{\iosuename}{Joseph~T.~Iosue}
+\newcommand{\iosueemail}{\href{mailto:jtiosue@gmail.com}{jtiosue@gmail.com}}
+\newcommand{\UMD}{University~of~Maryland,~College~Park,~Maryland~20742,~USA}
+\newcommand{\JQI}{Joint~Quantum~Institute, NIST/\UMD}
+\newcommand{\QUICS}{Joint~Center~for~Quantum~Information~and~Computer~Science, NIST/\UMD}
+
+% to label equations by section, e.g. equation 1.3, 2.5, etc.
+% \numberwithin{equation}{section}
+
+% for ``commenting out'' chunks of text 
+\newcommand{\ignore}[1]{}
+\newcommand{\tempignore}[1]{#1}
+% for notes on the text 
+\newcommand{\note}[1]{{\color{red} [#1]}}
+\WithSuffix\newcommand\note*[1]{{\color{red} #1}}
+
+% supposed to be loaded last
+% lintocpage makes the page numbers be linked in the 
+% table of contents instead of the section titles.
+\usepackage[colorlinks,citecolor=blue,bookmarks=true,breaklinks=true,linktocpage=true]{hyperref}
+% make ref to figure go to top of figure instead of to caption
+% doesn't usually work with revtex. See
+% https://tex.stackexchange.com/questions/620203/how-do-i-justify-the-text-using-subcaptions-in-the-attached-code
+% https://tex.stackexchange.com/questions/310496/subfloat-caption-position
+% \usepackage{caption}
+\usepackage{caption}
+\captionsetup[figure]{justification=justified,singlelinecheck=false}
+
+% Makes ligatured fonts searchable and copyable in pdf readers. Should be loaded after hyperref
+\usepackage{cmap}
+
+% for stuff like ï. Should be after cmap
+\usepackage[T1]{fontenc}
+
+% needs to be loaded after hyperref
+\usepackage[capitalize]{cleveref}
+
+% theorems and etc.
+\newtheorem{theorem}{Theorem}%[section]
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}
+\theoremstyle{remark}\newtheorem{observation}[theorem]{Observation}
+% \theoremstyle{definition}\newtheorem{example}[theorem]{Example}
+\theoremstyle{definition}\newtheorem{examplex}[theorem]{Example}
+\newenvironment{example}
+{\pushQED{\qed}\renewcommand{\qedsymbol}{$\diamond$}\examplex}
+{\popQED\endexamplex}
+
+% weird cleverref bug as of tex2025
+% https://tex.stackexchange.com/a/751181
+\AddToHook{env/theorem/begin}{\crefalias{theorem}{theorem}}
+\AddToHook{env/claim/begin}{\crefalias{theorem}{claim}}
+\AddToHook{env/proposition/begin}{\crefalias{theorem}{proposition}}
+\AddToHook{env/lemma/begin}{\crefalias{theorem}{lemma}}
+\AddToHook{env/corollary/begin}{\crefalias{theorem}{corollary}}
+\AddToHook{env/conjecture/begin}{\crefalias{theorem}{conjecture}}
+\AddToHook{env/fact/begin}{\crefalias{theorem}{fact}}
+\AddToHook{env/definition/begin}{\crefalias{theorem}{definition}}
+\AddToHook{env/remark/begin}{\crefalias{theorem}{remark}}
+\AddToHook{env/observation/begin}{\crefalias{theorem}{observation}}
+\AddToHook{env/example/begin}{\crefalias{theorem}{example}}
+
+\usepackage{apptools}
+\AtAppendix{
+    \numberwithin{theorem}{section}
+    \numberwithin{figure}{section}
+    \numberwithin{table}{section}
+    \numberwithin{algorithm}{section}
+    \renewcommand{\theequation}{\thesection\arabic{equation}}
+}
+
+\let\originaladdtocontents\addtocontents
+\newcommand{\notoc}{\renewcommand{\addtocontents}[2]{}}
+\newcommand{\toc}{\let\addtocontents\originaladdtocontents}
+
+% number aligned equations as subequations. uses ifthen
+% usage: just like align. But if you want to label the full block, include optional arg \begin{salign}[eq:label]
+\newenvironment{salign}[1][]{
+    \subequations
+    \ifthenelse{\equal{#1}{}}
+    {}
+    {\label{#1}}
+    \align
+}{
+    \endalign\endsubequations
+}
+
+% bb
+\newcommand{\bbA}{\mathbb{A}}
+\newcommand{\bbB}{\mathbb{B}}
+\newcommand{\bbC}{\mathbb{C}}
+\newcommand{\bbD}{\mathbb{D}}
+\newcommand{\bbE}{\mathbb{E}}
+\newcommand{\bbF}{\mathbb{F}}
+\newcommand{\bbG}{\mathbb{G}}
+\newcommand{\bbH}{\mathbb{H}}
+\newcommand{\bbI}{\mathbb{I}}
+\newcommand{\bbJ}{\mathbb{J}}
+\newcommand{\bbK}{\mathbb{K}}
+\newcommand{\bbL}{\mathbb{L}}
+\newcommand{\bbM}{\mathbb{M}}
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbO}{\mathbb{O}}
+\newcommand{\bbP}{\mathbb{P}}
+\newcommand{\bbQ}{\mathbb{Q}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbS}{\mathbb{S}}
+\newcommand{\bbT}{\mathbb{T}}
+\newcommand{\bbU}{\mathbb{U}}
+\newcommand{\bbV}{\mathbb{V}}
+\newcommand{\bbW}{\mathbb{W}}
+\newcommand{\bbX}{\mathbb{X}}
+\newcommand{\bbY}{\mathbb{Y}}
+\newcommand{\bbZ}{\mathbb{Z}}
+
+% cal
+\newcommand{\calA}{\mathcal{A}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\calC}{\mathcal{C}}
+\newcommand{\calD}{\mathcal{D}}
+\newcommand{\calE}{\mathcal{E}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\calG}{\mathcal{G}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calI}{\mathcal{I}}
+\newcommand{\calJ}{\mathcal{J}}
+\newcommand{\calK}{\mathcal{K}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calM}{\mathcal{M}}
+\newcommand{\calN}{\mathcal{N}}
+\newcommand{\calO}{\mathcal{O}}
+\newcommand{\calP}{\mathcal{P}}
+\newcommand{\calQ}{\mathcal{Q}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calU}{\mathcal{U}}
+\newcommand{\calV}{\mathcal{V}}
+\newcommand{\calW}{\mathcal{W}}
+\newcommand{\calX}{\mathcal{X}}
+\newcommand{\calY}{\mathcal{Y}}
+\newcommand{\calZ}{\mathcal{Z}}
+
+% frak
+\newcommand{\frakA}{\mathfrak{A}}
+\newcommand{\frakB}{\mathfrak{B}}
+\newcommand{\frakC}{\mathfrak{C}}
+\newcommand{\frakD}{\mathfrak{D}}
+\newcommand{\frakE}{\mathfrak{E}}
+\newcommand{\frakF}{\mathfrak{F}}
+\newcommand{\frakG}{\mathfrak{G}}
+\newcommand{\frakH}{\mathfrak{H}}
+\newcommand{\frakI}{\mathfrak{I}}
+\newcommand{\frakJ}{\mathfrak{J}}
+\newcommand{\frakK}{\mathfrak{K}}
+\newcommand{\frakL}{\mathfrak{L}}
+\newcommand{\frakM}{\mathfrak{M}}
+\newcommand{\frakN}{\mathfrak{N}}
+\newcommand{\frakO}{\mathfrak{O}}
+\newcommand{\frakP}{\mathfrak{P}}
+\newcommand{\frakQ}{\mathfrak{Q}}
+\newcommand{\frakR}{\mathfrak{R}}
+\newcommand{\frakS}{\mathfrak{S}}
+\newcommand{\frakT}{\mathfrak{T}}
+\newcommand{\frakU}{\mathfrak{U}}
+\newcommand{\frakV}{\mathfrak{V}}
+\newcommand{\frakW}{\mathfrak{W}}
+\newcommand{\frakX}{\mathfrak{X}}
+\newcommand{\frakY}{\mathfrak{Y}}
+\newcommand{\frakZ}{\mathfrak{Z}}
+\newcommand{\fraka}{\mathfrak{a}}
+\newcommand{\frakb}{\mathfrak{b}}
+\newcommand{\frakc}{\mathfrak{c}}
+\newcommand{\frakd}{\mathfrak{d}}
+\newcommand{\frake}{\mathfrak{e}}
+\newcommand{\frakf}{\mathfrak{f}}
+\newcommand{\frakg}{\mathfrak{g}}
+\newcommand{\frakh}{\mathfrak{h}}
+\newcommand{\fraki}{\mathfrak{i}}
+\newcommand{\frakj}{\mathfrak{j}}
+\newcommand{\frakk}{\mathfrak{k}}
+\newcommand{\frakl}{\mathfrak{l}}
+\newcommand{\frakm}{\mathfrak{m}}
+\newcommand{\frakn}{\mathfrak{n}}
+\newcommand{\frako}{\mathfrak{o}}
+\newcommand{\frakp}{\mathfrak{p}}
+\newcommand{\frakq}{\mathfrak{q}}
+\newcommand{\frakr}{\mathfrak{r}}
+\newcommand{\fraks}{\mathfrak{s}}
+\newcommand{\frakt}{\mathfrak{t}}
+\newcommand{\fraku}{\mathfrak{u}}
+\newcommand{\frakv}{\mathfrak{v}}
+\newcommand{\frakw}{\mathfrak{w}}
+\newcommand{\frakx}{\mathfrak{x}}
+\newcommand{\fraky}{\mathfrak{y}}
+\newcommand{\frakz}{\mathfrak{z}}
+
+% brackets
+\newcommand{\parentheses}[1]{\left(#1\right)}
+\newcommand{\brackets}[1]{\left[#1\right]}
+\newcommand{\curlybrackets}[1]{\left\{#1\right\}}
+\newcommand{\set}{\curlybrackets}
+\newcommand{\mset}[1]{\left\{\!\!\left\{ #1 \right\} \!\! \right\}}
+\newcommand{\pargs}[1]{\!\parentheses{#1}}
+\newcommand{\bargs}[1]{\!\brackets{#1}}
+\newcommand{\cbargs}[1]{\!\curlybrackets{#1}}
+\newcommand{\angles}[1]{\left\langle #1\right\rangle}
+\newcommand{\ceil}[1]{\left\lceil #1\right\rceil}
+\newcommand{\floor}[1]{\left\lfloor #1\right\rfloor}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\nnorm}[1]{\left\lvert\hspace{-.03cm} \norm{#1} \hspace{-.03cm} \right\rvert}
+% with *, don't automatically size
+\WithSuffix\newcommand\parentheses*[1]{(#1)}
+\WithSuffix\newcommand\brackets*[1]{[#1]}
+\WithSuffix\newcommand\curlybrackets*[1]{\{#1\}}
+\WithSuffix\newcommand\mset*[1]{\{\!\!\{ #1 \} \!\!\}}
+\WithSuffix\newcommand\pargs*[1]{(#1)}
+\WithSuffix\newcommand\bargs*[1]{[#1]}
+\WithSuffix\newcommand\cbargs*[1]{\{#1\}}
+\WithSuffix\newcommand\angles*[1]{\langle #1\rangle}
+\WithSuffix\newcommand\ceil*[1]{\lceil #1\rceil}
+\WithSuffix\newcommand\floor*[1]{\lfloor #1\rfloor}
+\WithSuffix\newcommand\abs*[1]{\lvert #1 \rvert}
+\WithSuffix\newcommand\norm*[1]{\lVert #1 \rVert}
+\WithSuffix\newcommand\nnorm*[1]{\lvert\hspace{-.03cm}\lVert #1 \rVert\hspace{-.03cm}\rvert}
+
+% brakets
+\makeatletter
+\newcommand{\ket}[1]{\@ifnextchar\bra{\mathinner{\lvert#1\rangle}\!}{\mathinner{\lvert#1\rangle}}}
+\newcommand{\bra}[1]{\@ifnextchar\ket{\mathinner{\langle#1}\!}{\mathinner{\langle#1\rvert}}}
+\newcommand{\Ket}[1]{\@ifnextchar\Bra{\mathinner{\big\lvert#1\big\rangle}\!}{\mathinner{\big\lvert#1\big\rangle}}}
+\newcommand{\Bra}[1]{\@ifnextchar\Ket{\mathinner{\big\langle#1}\!}{\mathinner{\big\langle#1\big\rvert}}}
+\makeatother
+
+% other
+\DeclareMathOperator*{\argmax}{arg\!\max}
+\DeclareMathOperator*{\argmin}{arg\!\min}
+\newcommand{\Dom}[1]{\operatorname{Dom}\pargs{#1}}
+\newcommand{\sgn}[1]{\operatorname{sgn}\pargs{#1}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\perm}{\operatorname{perm}}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}
+\newcommand{\Dd}[1]{\mathop{}\!\mathrm{d^{#1}}}
+
+% probability
+\DeclareMathOperator*{\Expval}{\mathbb{E}}
+\newcommand{\EX}[2]{\Expval_{#1}\bargs{#2}}
+\DeclareMathOperator*{\Prob}{Pr}
+\renewcommand{\Pr}[2]{\Prob_{#1}\bargs{#2}}
+\DeclareMathOperator*{\variance}{Var}
+\DeclareMathOperator*{\covariance}{Cov}
+
+% morphisms
+\newcommand{\Hom}[1]{\operatorname{Hom}\pargs{#1}}
+\newcommand{\End}[1]{\operatorname{End}\pargs{#1}}
+\newcommand{\Aut}[1]{\operatorname{Aut}\pargs{#1}}
+
+% big O notation
+\newcommand{\bigO}[1]{\calO\pargs{#1}}
+\newcommand{\littleo}[1]{o\pargs{#1}}
+\newcommand{\bigOmega}[1]{\Omega\pargs{#1}}
+\newcommand{\littleomega}[1]{\omega\pargs{#1}}
+\newcommand{\bigTheta}[1]{\Theta\pargs{#1}}
+\newcommand{\poly}[1]{\operatorname{poly}\pargs{#1}}
+\newcommand{\polylog}[1]{\operatorname{polylog}\pargs{#1}}
+% with *, don't automatically size
+\WithSuffix\newcommand\bigO*[1]{\calO\pargs*{#1}}
+\WithSuffix\newcommand\littleo*[1]{o\pargs*{#1}}
+\WithSuffix\newcommand\bigOmega*[1]{\Omega\pargs*{#1}}
+\WithSuffix\newcommand\littleomega*[1]{\omega\pargs*{#1}}
+\WithSuffix\newcommand\bigTheta*[1]{\Theta\pargs*{#1}}
+\WithSuffix\newcommand\poly*[1]{\operatorname{poly}\pargs*{#1}}
+\WithSuffix\newcommand\polylog*[1]{\operatorname{polylog}\pargs*{#1}}
+
+% more math
+\newcommand{\e}{\mathrm{e}}
+\renewcommand{\i}{\mathrm{i}}
+\newcommand{\U}{\mathrm{U}}
+\renewcommand{\O}{\mathrm{O}}
+\newcommand{\SU}{\mathrm{SU}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\PSU}{\mathrm{PSU}}
+\newcommand{\Sp}{\mathrm{Sp}}
+\newcommand{\GL}{\mathrm{GL}}
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+\newcommand{\diag}{\operatorname{diag}}
+
+
+%%% t-Gaussian states
+\usepackage{xspace}
+
+% \newcommand{\G}[1]{\( (#1) \)-Gaussian\xspace}
+% \WithSuffix\newcommand\G*[1]{\( #1 \)-Gaussian\xspace}
+
+\newcommand{\G}[1]{\( G_{#1} \)\xspace}
+\WithSuffix\newcommand\G*[1]{\G{#1}}
+
+
+\newcommand{\Gt}{\G*{t}}
+\newcommand{\Gtt}{\G{2t}}
+
+%  wierd revtex bug before algorithm - https://tex.stackexchange.com/questions/510865/missing-number-treated-as-zero-and-extra-endcsname-errors-using-algorithm
+\usepackage{float}
+\makeatletter
+\@ifclassloaded{article}{%
+}{%
+    \let\newfloat\newfloat@ltx
+}
+\makeatother
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{setspace}
+
+
+\usepackage{CJKutf8}
