@@ -1,8 +1,6 @@
 \usepackage{amsmath,amssymb,amsthm,amsfonts,bm,graphicx,mathtools,ifthen,xcolor}
 \allowdisplaybreaks
 
-\graphicspath{ {./graphics/} }
-
 % to allow for defining commands with *
 % e.g. see \note and \note* below
 \usepackage{suffix}
@@ -59,7 +57,7 @@
 % \theoremstyle{definition}\newtheorem{example}[theorem]{Example}
 \theoremstyle{definition}\newtheorem{examplex}[theorem]{Example}
 \newenvironment{example}
-{\pushQED{\qed}\renewcommand{\qedsymbol}{$\diamond$}\examplex}
+{\pushQED{\qed}\renewcommand{\qedsymbol}{\(\diamond\)}\examplex}
 {\popQED\endexamplex}
 
 % weird cleverref bug as of tex2025

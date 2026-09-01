@@ -1,3 +1,18 @@
+\begin{frame}[noframenumbering,plain]
+  \titlepage
+
+  \absolutePos{3.4cm}{3.2cm}{\textbf{Paper}}
+  \absolutePos{3.4cm}{5.2cm}{\includegraphics[height=.4\textheight]{graphics/paper-qr.png}}
+
+  \absolutePos{12.6cm}{3.2cm}{\textbf{Slides}}
+  \absolutePos{12.6cm}{5.2cm}{\includegraphics[height=.4\textheight]{graphics/slides-qr.png}}
+
+  \absolutePos{8cm}{6cm}{\textbf{TQC 2026}}
+  \absolutePos{8cm}{7.4cm}{\includegraphics[height=.3\textheight]{graphics/logo-2026.png}}
+
+\end{frame}
+
+
 \section{Introduction and main results}
 
 \begin{frame}{Introduction}
@@ -159,7 +174,7 @@
 
   \begin{theorem}
     Using a \textbf{median of means} estimator,
-    \(\Lambda^{(2t)}\) for \(\calU_S\ket{\bm f}\) can be estimated to norm precision \(\varepsilon\) with probability at least \(1-\delta\) using
+    \(\Lambda^{(t)}\) for \(\calU_S\ket{\bm f}\) can be estimated to norm precision \(\varepsilon\) with probability at least \(1-\delta\) using
     \(N \sim \bigO{\frac{\log(n/\delta)}{\varepsilon^2} \parentheses{n\norm*{f}_\infty \norm*{S^TS}}^{2t}}\) \textbf{heterodyne} samples.
   \end{theorem}
 
@@ -168,7 +183,7 @@
   \vfill
 
   \begin{corollary}[Full solution to \cite{aaronson2023efficient-tomog}]
-    \(N\) heterodyne samples from the state \(\calU_S\ket{\bm f}\) suffice via our efficient algorithm to learn a \(Q,\bm g\) satisfying \(\abs*{\bra{\bm f}\calU_S^\dag \calU_Q \ket{\bm g}} \geq 1 - \gamma\) with probability at least \(1-\delta\), where
+    \(N\) heterodyne samples from the state \(\calU_S\ket{\bm f}\) suffice via our \textbf{efficient} algorithm to learn a \(Q,\bm g\) satisfying \(\abs*{\bra{\bm f}\calU_S^\dag \calU_Q \ket{\bm g}} \geq 1 - \gamma\) with probability at least \(1-\delta\), where
     \begin{equation*}
       N \sim \bigO{\frac{\log(n/\delta)}{\gamma^2} n^8 \norm*{\bm f}_\infty^{10} \norm*{S^TS}^{10}}
     \end{equation*}
@@ -218,7 +233,7 @@
     \end{align*}
     \pause
     \item Because \(H\) is non-degenerate, any state with the matching moments is \(\psi\) \pause
-    \item If \(H\) is \emph{gapped}, then \textbf{inverse poly moment precision corresponds to inverse poly state fidelity} \parencite{yu2023learningmarginalssuffices}
+    \item If \(H\) is \emph{gapped}, then \textbf{inverse poly moment precision corresponds to inverse poly state infidelity} \parencite{yu2023learningmarginalssuffices}
   \end{spaceditemize}
 
 \end{frame}
@@ -250,7 +265,7 @@
     ~~~~~the Fock state \(\ket{1,\dots,1} \equiv \ket{1^n}\)\\[1em]
     ~~~~~the error free case (assume moments are known \emph{perfectly})\\[1em]
     \pause
-    \item We sketch the learning algorithm with these simplicifcations
+    \item We sketch the learning algorithm for \(\calU_W\ket{1^n}\) with these simplicifcations
   \end{spaceditemize}
 
 \end{frame}
@@ -327,30 +342,14 @@
       =
       \sum_{j=1}^n \abs*{U_{ij}}e^{\i\phi_{ij}}\ket{w_j}\otimes \ket{w_j}
     \end{equation*}
-    \item The unitary \(U\) is totally arbitrary and unpredictable
-  \end{spaceditemize}
-\end{frame}
-
-
-\begin{frame}{Learning algorithm}
-  \begin{block}{}
-    Given access to the vectors \(\ket{\tilde w_i} = \sum_{j=1}^n \abs*{U_{ij}}e^{\i\phi_{ij}}\ket{w_j}\otimes \ket{w_j}\) with \(U,\phi\) unknown and arbitrary, learn \(\ket{w_j}\) (up to phases and permutations)
-  \end{block}
-  \vfill
-  \pause
-  \begin{spaceditemize}
     \item Take the intersection of the Schmidt decompositions of all \(\ket{\tilde w_i}\) to learn all the \(\ket{w_i}\) up to phases
-    \pause
-    \item We define \( V \) to be the unitary matrix whose columns are precisely these learned vectors
-    \item By construction, \( V \) is equal to \( W \) up to a permutation of its columns and global phases applied to the columns
   \end{spaceditemize}
-
 \end{frame}
 
 \begin{frame}{Learning algorithm}
 
   \begin{spaceditemize}[2em]
-    \item In other words, we have learned the matrix \(V = W \Phi P\), where \(\Phi\) is some arbitrary diagonal unitary matrix, and \(P\) is some arbitrary permutation matrix
+    \item We have therefore learned the matrix \(V = W \Phi P\), where \(\Phi\) is some arbitrary diagonal unitary matrix, and \(P\) is some arbitrary permutation matrix
     \item It follows that the state \( \calU_V \ket{1^n} \) is the same as \( \calU_W \ket{1^n} \) up to an irrelevant global phase, thereby completing the learning algorithm
     \pause
     \item To prove the main result, we need to track how the error in the moments propagates through the algorithm to an error in the fidelity
@@ -366,7 +365,7 @@
 
 \begin{frame}{Summary}
   \begin{spaceditemize}
-    \item By going beyond second moments, we found a \textbf{sample and time efficient} algorithm to learn \emph{BosonSampling states}
+    \item B using higher moments, we found a \textbf{sample and time efficient} algorithm to learn \emph{BosonSampling states}
     \item Solves open problem left by \cite{aaronson2023efficient-tomog}
     \pause
     \item We construct an \textbf{infinite set of Gaussian invariants for generic bosonic states} using classical invariant theory of the action of symplectic group on moments, relevant for state conversion \parencite{chabaud2020stellar-represe,hahn2024assessing-non-g}
@@ -381,6 +380,46 @@
     \item Certain classes of states \emph{hide information} from lower moments
     \item Invariants and generalizations of Wick's theorem
     \pause
+    \item Can we make our algorithm have more favorable scaling with energy? \\[1em]
+    \hspace{1em} \textbullet ~ Our algorithm requires \textcolor{red}{\(N \sim \poly*{n, \norm*{\bm f}_\infty, \norm*{S^TS}}\)} samples \\[1em]
+    \hspace{1em} \textbullet ~ Applying \parencite{bittel2025energy-independ}, we get
+    \textcolor{red}{\(N \sim \poly*{n, \norm*{\bm f}_\infty, \log \norm*{S^TS}}\)}
+  \end{spaceditemize}
+\end{frame}
+
+
+\begin{frame}{Thanks to my collaborators}
+  \begin{minipage}{.32\textwidth}
+    \begin{spaceditemize}[.25em]
+      \item Yuxin Wang
+      \item Alexey Gorshkov
+      \item Changhun Oh
+      \item Bill Fefferman
+      \item Soumik Ghosh
+      \item Ishaun Datta
+    \end{spaceditemize}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{.32\textwidth}
+    \centering
+    \textbf{Paper}
+
+    \includegraphics[width=\textwidth]{graphics/paper-qr.png}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{.32\textwidth}
+    \centering
+    \textbf{Slides}
+
+    \includegraphics[width=\textwidth]{graphics/slides-qr.png}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}{Extensions}
+  \begin{spaceditemize}
+    \item Our algorithm generalizes to a slightly larger class of states, and fails interestingly in other places
+    \item Certain classes of states \emph{hide information} from lower moments
+    \item Invariants and generalizations of Wick's theorem
     \item Can we make our algorithm have more favorable scaling with energy? \\[1em]
     \hspace{1em} \textbullet ~ Our algorithm requires \textcolor{red}{\(N \sim \poly*{n, \norm*{\bm f}_\infty, \norm*{S^TS}}\)} samples \\[1em]
     \hspace{1em} \textbullet ~ Applying \parencite{bittel2025energy-independ}, we get
