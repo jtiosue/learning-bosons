@@ -21,13 +21,13 @@
 
 \let\oldappendix\appendix
 \renewcommand{\appendix}{
-  \oldappendix
-  \section{Additional slides}
-  \begin{frame}[noframenumbering,plain,c]
-    \begin{center}
-      \Huge Additional slides
-    \end{center}
-  \end{frame}
+    \oldappendix
+    \section{Additional slides}
+    \begin{frame}[noframenumbering,plain,c]
+        \begin{center}
+            \Huge Additional slides
+        \end{center}
+    \end{frame}
 }
 
 % get rid of hyperref warning
@@ -180,12 +180,18 @@
 
 
 \usepackage{tikz}
+\usetikzlibrary{positioning}
 \usetikzlibrary{shapes.geometric, arrows}
 \tikzstyle{arrow} = [thick,->,>=stealth]
 \newcommand{\absolutePos}[3]{
-  \begin{tikzpicture}[remember picture,overlay]
-    \node[xshift=#1,yshift=-#2] at (current page.north west){#3};
-  \end{tikzpicture}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[xshift=#1,yshift=-#2] at (current page.north west){#3};
+    \end{tikzpicture}
+}
+\newcommand{\absolutePosLeftAlign}[3]{
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[align=left,anchor=west,xshift=#1,yshift=-#2] at (current page.north west){#3};
+    \end{tikzpicture}
 }
 \usetikzlibrary{decorations.pathreplacing,patterns,math,external,decorations.pathmorphing,arrows.meta}
 
@@ -267,9 +273,9 @@
 % optional argument can be empty, currentsection
 % currentsubsection, etc.
 \newcommand{\overviewslide}[1][]{
-  \begin{frame}{Overview}
-    \tableofcontents[#1]
-  \end{frame}
+    \begin{frame}{Overview}
+        \tableofcontents[#1]
+    \end{frame}
 }
 
 % \AtEndDocument{

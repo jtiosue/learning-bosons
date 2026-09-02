@@ -261,103 +261,101 @@
 \overviewslide[currentsection]
 
 
-\begin{frame}{Sketch of our algorithm}
-  \begin{spaceditemize}
-    \item For simplicity, we will restrict our attention here to \\[1em]
-    ~~~~~passive Gaussian unitaries (specified by \(W \in \U(n)\))\\[1em]
-    ~~~~~the Fock state \(\ket{1,\dots,1} \equiv \ket{1^n}\)\\[1em]
-    ~~~~~the error free case (assume moments are known \emph{perfectly})\\[1em]
-    \pause
-    \item We sketch the learning algorithm for \(\calU_W\ket{1^n}\) with these simplicifcations
-  \end{spaceditemize}
 
-\end{frame}
-
-\begin{frame}{Passive moment transformations}
-  \begin{spaceditemize}
-    \item Recall \( W\in U(n) \) acts as
-    \[\calU_W^\dag a_i \calU_W = \sum_{j} W_{ij} a_j \]
-    \item How do moments \textbf{transform}?
-    \begin{align*}
-       & \sigma^{(t)}_{i_1,\dots,i_t; j_1,\dots,j_t} = \bra{1^n}\calU_W^\dag a_{i_1}\dots a_{i_t}a^\dag_{j_1}\dots a^\dag_{j_t} \calU_W\ket{1^n} \\
-      %
-       & (\sigma^{(t)}_0)_{i_1,\dots,i_t; j_1,\dots,j_t} = \bra{1^n} a_{i_1}\dots a_{i_t}a^\dag_{j_1}\dots a^\dag_{j_t}\ket{1^n}                 \\
-      %
-       & \sigma^{(t)} = W^{\otimes t}\sigma^{(t)}_0 W^{\dag \otimes t}
-    \end{align*}
-    %
-    \item \(\sigma^{(t)}\) is a submatrix of a unitary transformation of the \(\Lambda^{(t)}\) moments
-  \end{spaceditemize}
-
-\end{frame}
-
-
-\begin{frame}{Reducing the problem}
-  \begin{spaceditemize}
-    \item If we were dealing with Gaussian states, \(\sigma^{(1)}\) would be sufficient
-    \pause
-    \item But for us \textbf{second moments are useless} --- easy to check that \(\sigma^{(1)}_0 \propto \bbI\)
-    \item Therefore, \(\sigma^{(1)} = W \sigma^{(1)}_0 W^\dag = \sigma^{(1)}_0\), so we learn nothing about \(W\) by measuring second moments
-    \pause
-    \item So now we use \textbf{fourth moments}, \(\sigma^{(2)}\)
-  \end{spaceditemize}
-\end{frame}
-
-
-\begin{frame}{Learning algorithm}
-  \begin{block}{}
-    Given the fourth moments \(\sigma^{(2)} = W^{\otimes 2} \sigma^{(2)}_0 W^{\dag \otimes 2}\) for the state \(\calU_W \ket{1^n}\), determine \(W\)
-  \end{block}
+\begin{frame}{Using invariants to learn states}
+  \centering
   \vfill
-  \pause
-  \begin{spaceditemize}[0em]
-    % \item Recall we are still assuming that $\sigma^{(4)}$ is known perfectly
-    \item Because \( \sigma^{(2)}_0 \) is a matrix on \( (\bbC^{n})^{\otimes 2} \), we can represent it in bra-ket notation using the standard basis \( \ket{1},\dots,\ket{n} \) of \( \bbC^n \)
-    % .
-    % Easy to check that 
-    \begin{equation*}
-      \sigma^{(2)}_0 = 4 (\bbI + U_{\rm SWAP})
-      - 2\sum_{i=1}^{n}\ket{i,i}\bra{i,i},
-    \end{equation*}
-    \pause
-    \item Denote the \( i^{\rm th} \) column vector of \( W \) by \( \ket{w_i} \).
-    Given access to \(\sigma^{(2)}\), we can thus form the matrix
-    \begin{align*}
-      A & = \frac{1}{2}\parentheses{4(\mathbb I + U_{\rm SWAP}) - \sigma^{(2)}}     \\
-      %
-        & =  \sum_{i=1}^n (\ket{w_i}\otimes \ket{w_i})(\bra{w_i}\otimes \bra{w_i}),
-    \end{align*}
-  \end{spaceditemize}
+  \only<1>{
+    \absolutePosLeftAlign{.2cm}{1.8cm}{\color{blue}Our \textbf{set of states} decomposes into orbits under the action of \(\Sp(2n,\bbR)\) (Gaussian unitaries)}
+    \absolutePos{5.5cm}{3.2cm}{\color{red}\large\(\calU_S\ket{0,0,1}\)}
+    \begin{tikzpicture}
+      \filldraw [gray] (0,0) circle (10pt);
+      \filldraw [gray] (3,0) circle (20pt);
+      \filldraw [gray] (6,0) circle (28pt);
+      \filldraw [gray] (9,0) circle (22pt);
+      \node at (0,-2) {\large\(\calU_{\Sp(2n,\bbR)}\ket{0,0,0}\)};
+      \node at (3,-2) {\large\(\calU_{\Sp(2n,\bbR)}\ket{0,0,1}\)};
+      \node at (6,-2) {\large\(\calU_{\Sp(2n,\bbR)}\ket{2,1,3}\)};
+      \node at (9,-2) {\large\(\calU_{\Sp(2n,\bbR)}\ket{9,1,0}\)};
+      \node at (12,0) {\large\(\dots\)};
+      \node at (12,-2) {\large\(\dots\)};
+      \filldraw[red] (3.1,.35) circle (2pt);
+    \end{tikzpicture}
+  }
+  \only<2>{
+    \absolutePosLeftAlign{.2cm}{1.8cm}{\color{blue}Measure \textbf{symplectic invariants} to learn a representative of the orbit}
+    \begin{tikzpicture}
+      \filldraw [black] (0,0) circle (2pt);
+      \filldraw [red] (3,0) circle (2pt);
+      \filldraw [black] (6,0) circle (2pt);
+      \filldraw [black] (9,0) circle (2pt);
+      \node at (0,-2) {\large\(\ket{0,0,0}\)};
+      \node at (3,-2) {\color{red}\large\(\ket{0,0,1}\)};
+      \node at (6,-2) {\large\(\ket{2,1,3}\)};
+      \node at (9,-2) {\large\(\ket{9,1,0}\)};
+      \node at (12,0) {\large\(\dots\)};
+      \node at (12,-2) {\large\(\dots\)};
+    \end{tikzpicture}
+  }
+  \only<3>{
+    \absolutePosLeftAlign{.2cm}{1.8cm}{\color{blue}Now we just need to learn the Gaussian unitary}
+    \begin{tikzpicture}
+      \phantom{
+        \filldraw [black] (0,0) circle (2pt);
+        \filldraw [red] (3,0) circle (2pt);
+        \filldraw [black] (6,0) circle (2pt);
+        \filldraw [black] (9,0) circle (2pt);
+        \node at (0,-2) {\large\(\ket{0,0,0}\)};
+        \node at (3,-2) {\color{red}\large\(\ket{0,0,1}\)};
+        \node at (6,-2) {\large\(\ket{2,1,3}\)};
+        \node at (9,-2) {\large\(\ket{9,1,0}\)};
+        \node at (12,0) {\large\(\dots\)};
+        \node at (12,-2) {\large\(\dots\)};
+      }
+      \filldraw [gray] (3,0) circle (20pt);
+      \node at (3,-2) {\color{red}\large\(\calU_S\ket{0,0,1}\)};
+      \filldraw[red] (3.1,.35) circle (2pt);
+    \end{tikzpicture}
+  }
 \end{frame}
 
-\begin{frame}{Learning algorithm}
-  \begin{block}{}
-    Given access to a matrix \(A = \sum_{i=1}^n (\ket{w_i}\otimes \ket{w_i})(\bra{w_i}\otimes \bra{w_i})\), learn \(\ket{w_i}\) (up to phases and permutations)
-  \end{block}
-  \vfill
-  \pause
+
+\begin{frame}{Reconstruction algorithm}
   \begin{spaceditemize}
-    \item Unitarily diagonalize \(A\) and take the \(+1\) eigenvalues --- we learn the eigenspace \(\text{span}\cbargs{\ket{w_i}\otimes \ket{w_i} \mid i=1,\dots, n}\)
+    \item Once we find a representative of the orbit, we (virtually) ``undo'' part of the Gaussian unitary
+    \item The problem then reduces to solving many instances of learning \(\calU_W\ket{b,\dots,b}\) for a \emph{passive} Gaussian unitary \(\calU_W\)
     \pause
-    \item A numerical diagonalization routine will return the vectors
-    \begin{equation*}
-      \ket{\tilde w_i} = \sum_{j=1}^n U_{ij}\ket{w_j}\otimes \ket{w_j}
-      =
-      \sum_{j=1}^n \abs*{U_{ij}}e^{\i\phi_{ij}}\ket{w_j}\otimes \ket{w_j}
-    \end{equation*}
-    \item Take the intersection of the Schmidt decompositions of all \(\ket{\tilde w_i}\) to learn all the \(\ket{w_i}\) up to phases
+    \item We know the moments of the state \(\ket{b,\dots,b}\), and we know how moments transform under \(\calU_W\)
+    \item We find an explicit algorithm to reconstruct \(W\) from the moments of \(\calU_W\ket{b,\dots,b}\)
+    \pause
+    \item We then (virtually) ``redo'' what we undid
   \end{spaceditemize}
 \end{frame}
 
-\begin{frame}{Learning algorithm}
 
-  \begin{spaceditemize}[2em]
-    \item We have therefore learned the matrix \(V = W \Phi P\), where \(\Phi\) is some arbitrary diagonal unitary matrix, and \(P\) is some arbitrary permutation matrix
-    \item It follows that the state \( \calU_V \ket{1^n} \) is the same as \( \calU_W \ket{1^n} \) up to an irrelevant global phase, thereby completing the learning algorithm
+\begin{frame}{Symplectic invariants}
+  \begin{spaceditemize}
+    \item Although not necessary for this particular learning problem,
+    we construct an \textbf{infinite set of Gaussian invariants for generic bosonic states} using classical invariant theory of the action of symplectic group on moments
+    \item Any invariant that is a polynomial in the moments can be expressed as a polynomial in our invariants
     \pause
-    \item To prove the main result, we need to track how the error in the moments propagates through the algorithm to an error in the fidelity
+    \item We envision that these invariants will be useful for other learning problems
   \end{spaceditemize}
-
+  \vfill
+  \begin{center}
+    \begin{tikzpicture}
+      \filldraw [gray] (0,0) circle (10pt);
+      \filldraw [gray] (3,0) circle (20pt);
+      \filldraw [gray] (6,0) circle (28pt);
+      \filldraw [gray] (9,0) circle (22pt);
+      \node at (0,-1.3) {\large\(\calU_{\Sp(2n,\bbR)}\ket{\bm \lambda^{(1)}}\)};
+      \node at (3,-1.3) {\large\(\calU_{\Sp(2n,\bbR)}\ket{\bm \lambda^{(2)}}\)};
+      \node at (6,-1.3) {\large\(\calU_{\Sp(2n,\bbR)}\ket{\bm \lambda^{(3)}}\)};
+      \node at (9,-1.3) {\large\(\calU_{\Sp(2n,\bbR)}\ket{\bm \lambda^{(4)}}\)};
+      \node at (12,0) {\large\(\dots\)};
+      \node at (12,-1.3) {\large\(\dots\)};
+    \end{tikzpicture}
+  \end{center}
 \end{frame}
 
 
